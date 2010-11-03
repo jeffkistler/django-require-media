@@ -1,0 +1,16 @@
+{% load require_media_tags %}
+<html>
+  <head>
+    <title>{% block title %}{% endblock %}</title>
+    {% render_requirements css %}
+  </head>
+  <body>
+    {% if messages %}
+      {% include "example2/messages.html" %}
+    {% endif %}
+
+    {% block content %}{% endblock %}        
+
+    {% render_requirements js %}
+  </body>
+</html>

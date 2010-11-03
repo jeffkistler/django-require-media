@@ -1,0 +1,11 @@
+========================
+Installing Require Media
+========================
+
+To install Require Media, run the following command inside this directory::
+
+    python setup.py install
+
+Require Media requires Python 2.5 or newer and Django 1.2 or newer.
+It is possible that it will work without incident on Python 2.4 and/or with an
+earlier version of Django, but these configurations have not been tested.

@@ -1,0 +1,11 @@
+=============
+Require Media
+=============
+
+Require media is a static dependency management application for use in
+Django_ projects. For installation instructions see the file ``INSTALL``
+in this directory and for documentation see the files in the ``docs/``
+directory.
+
+.. _Django: http://www.djangoproject.com/
+

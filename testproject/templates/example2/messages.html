@@ -1,0 +1,14 @@
+{% load require_media_tags %}
+{% require js jquery.js %}
+{% require js jquery-ui.js jquery.js %}
+{% require css jquery-ui.css %}
+
+<ul id="user-messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+
+{% require_inline messages_dialog js jquery-ui.js %}
+$("#user-messages").dialog({modal: true});    
+{% end_require_inline %}

@@ -1,0 +1,12 @@
+{% load require_media_tags %}
+<html>
+  <head>
+    <title>{% block title %}{% endblock %}</title>
+    {% include "example3/css.html" %}
+  </head>
+  <body>
+    {% block content %}{% endblock %}        
+
+    {% render_requirements js %}
+  </body>
+</html>
