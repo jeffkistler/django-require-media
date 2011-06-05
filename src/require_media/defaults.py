@@ -10,6 +10,9 @@ GROUPS = ["css", "js"]
 #: The name of the requirement attribute on the request object
 REQUEST_ATTR_NAME = "_require_media_manager"
 
+#: The name of the requirements manager in template context
+CONTEXT_VAR_NAME = "requirements_manager"
+
 #: The default template for external JavaScript requirements 
 JAVASCRIPT_EXTERNAL_TEMPLATE = '<script src="%s"></script>'
 
@@ -23,7 +26,7 @@ CSS_EXTERNAL_TEMPLATE = '<link rel="stylesheet" type="text/css" href="%s">'
 CSS_INLINE_TEMPLATE = '<style>%s</style>'
 
 #: A mapping of requirement names to replacement names
-REQUIREMENT_ALIASES = None
+REQUIREMENT_ALIASES = {}
 
 #: A mapping of requirement group names to replacement names
-REQUIREMENT_GROUP_ALIASES = None
+REQUIREMENT_GROUP_ALIASES = {}
