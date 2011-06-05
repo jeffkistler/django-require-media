@@ -12,6 +12,7 @@ setup(
     long_description = read('README'),
     author = 'Jeff Kistler',
     author_email = 'jeff@jeffkistler.com',
+    url = 'https://github.com/jeffkistler/django-require-media',
     packages = ['require_media', 'require_media.templatetags'],
     package_dir = {'': 'src'},
     classifiers = [
