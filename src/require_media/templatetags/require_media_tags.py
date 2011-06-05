@@ -62,10 +62,10 @@ def compile_require_inline_node(parser, token):
 
     """
     parts = token.split_contents()
+    nodelist = parser.parse(('end_require_inline',))
     if not len(parts) >= 3:
         raise template.TemplateSyntaxError("%s tag requires two arguments: name and group" % parts[0])
     tag_name, requirement, group, depends = parts[0], parts[1], parts[2], parts[3:]
-    nodelist = parser.parse(('end_require_inline',))
     parser.delete_first_token()
     requirement_aliases = settings.REQUIREMENT_ALIASES or {}
     group_aliases = settings.REQUIREMENT_GROUP_ALIASES or {}
