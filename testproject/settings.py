@@ -30,6 +30,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.media',
     'django.core.context_processors.request',
     'django.contrib.messages.context_processors.messages',
+    'require_media.context_processors.require_media',
 )
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 REQUIRE_MEDIA_REQUIREMENT_GROUP_ALIASES = {

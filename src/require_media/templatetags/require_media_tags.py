@@ -6,17 +6,9 @@ from require_media.manager import determine_requirement_group
 
 register = template.Library()
 
-# Create a template variable for later use
-request_var = template.Variable("request")
-
 def get_manager(context):
-    """
-    Try and resolve the request variable in the given context and retrieve
-    the requirement manager from it.
-    """
-    request = request_var.resolve(context)
-    requirement_manager = getattr(request, settings.REQUEST_ATTR_NAME)
-    return requirement_manager
+    return context.get(settings.CONTEXT_VAR_NAME, None)
+
 #
 # require_inline
 #
@@ -30,14 +22,11 @@ class RequireInlineNode(template.Node):
         self.nodelist = nodelist
         self.group = group
         self.depends = depends or []
-        self.request_var = template.Variable("request")
 
     def render(self, context):
-        try:
-            manager = get_manager(context)
+        manager = get_manager(context)
+        if manager is not None:
             manager.add_inline(self.requirement, self.nodelist, self.group, self.depends)
-        except (template.VariableDoesNotExist, AttributeError):
-            pass
         return u""
 
 def compile_require_inline_node(parser, token):
@@ -91,11 +80,9 @@ class RequireNode(template.Node):
         self.request_var = template.Variable("request")
 
     def render(self, context):
-        try:
-            manager = get_manager(context)
+        manager = get_manager(context)
+        if manager is not None:
             manager.add_external(self.requirement, self.group, self.depends)
-        except (template.VariableDoesNotExist, AttributeError):
-            pass
         return u""
 
 def compile_require_node(parser, token):
@@ -198,11 +185,9 @@ class RenderRequirementsNode(template.Node):
         self.request_var = template.Variable("request")
 
     def render(self, context):
-        try:
-            manager = get_manager(context)
+        manager = get_manager(context)
+        if manager:
             return DelayedRequirementsRenderer(manager, self.groups, context)
-        except (template.VariableDoesNotExist, AttributeError), e:
-            pass
         return u""
 
 

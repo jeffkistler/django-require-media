@@ -201,7 +201,7 @@ class RequireTagTestCase(RequestMiddlewareTestCase):
     def test_simple_with_group(self):
         request = self.get_request()
         t = template.Template("{% load require_media_tags %}{% require js jquery.js %}")
-        rendered = t.render(template.Context({"request": request}))
+        rendered = t.render(template.RequestContext(request))
         self.assertEquals("", rendered)
         requirement_manager = getattr(request, settings.REQUEST_ATTR_NAME, None)
         self.assertEquals(1, len(requirement_manager.requirements))
@@ -211,7 +211,7 @@ class RequireTagTestCase(RequestMiddlewareTestCase):
     def test_simple_no_group(self):
         request = self.get_request()
         t = template.Template("{% load require_media_tags %}{% require jquery.js %}")
-        rendered = t.render(template.Context({"request": request}))
+        rendered = t.render(template.RequestContext(request))
         self.assertEquals("", rendered)
         requirement_manager = getattr(request, settings.REQUEST_ATTR_NAME, None)
         self.assertEquals(1, len(requirement_manager.requirements))
@@ -227,7 +227,7 @@ class RequireTagTestCase(RequestMiddlewareTestCase):
     def test_depends_simple(self):
         request = self.get_request()
         t = template.Template("{% load require_media_tags %}{% require jquery-ui.js jquery.js %}")
-        rendered = t.render(template.Context({"request": request}))
+        rendered = t.render(template.RequestContext(request))
         self.assertEquals("", rendered)
         requirement_manager = getattr(request, settings.REQUEST_ATTR_NAME, None)
         self.assertEquals(1, len(requirement_manager.requirements))
@@ -239,7 +239,7 @@ class RequireTagTestCase(RequestMiddlewareTestCase):
     def test_requirement_alias(self):
         request = self.get_request()
         t = template.Template("{% load require_media_tags %}{% require jquery.min.js %}")
-        rendered = t.render(template.Context({"request": request}))
+        rendered = t.render(template.RequestContext(request))
         self.assertEquals("", rendered)
         requirement_manager = getattr(request, settings.REQUEST_ATTR_NAME, None)
         self.assertEquals(1, len(requirement_manager.requirements))
@@ -250,7 +250,7 @@ class RequireTagTestCase(RequestMiddlewareTestCase):
     def test_requirement_group_alias(self):
         request = self.get_request()
         t = template.Template("{% load require_media_tags %}{% require jquery jquery.min.js %}")
-        rendered = t.render(template.Context({"request": request}))
+        rendered = t.render(template.RequestContext(request))
         self.assertEquals("", rendered)
         requirement_manager = getattr(request, settings.REQUEST_ATTR_NAME, None)
         self.assertEquals(1, len(requirement_manager.requirements))
@@ -264,7 +264,7 @@ class RequireInlineTagTestCase(RequestMiddlewareTestCase):
     def test_simple(self):
         request = self.get_request()
         t = template.Template("{% load require_media_tags %}{% require_inline sidebar css %}#sidebar { float: left; }{% end_require_inline %}")
-        rendered = t.render(template.Context({"request": request}))
+        rendered = t.render(template.RequestContext(request))
         self.assertEquals(u"", rendered)
         requirement_manager = getattr(request, settings.REQUEST_ATTR_NAME, None)
         self.assertEquals(1, len(requirement_manager.requirements))
@@ -277,7 +277,7 @@ class RequireInlineTagTestCase(RequestMiddlewareTestCase):
     def test_depends(self):
         request = self.get_request()
         t = template.Template(u'{% load require_media_tags %}{% require_inline sidebar js jquery.js %}$("#sidebar").hide();{% end_require_inline %}')
-        rendered = t.render(template.Context({"request": request}))
+        rendered = t.render(template.RequestContext(request))
         self.assertEquals(u"", rendered)
         requirement_manager = getattr(request, settings.REQUEST_ATTR_NAME, None)
         self.assertEquals(1, len(requirement_manager.requirements))
@@ -302,7 +302,7 @@ class RenderRequirementsTagTestCase(RequestMiddlewareTestCase):
     def test_simple(self):
         request = self.get_request()
         t = template.Template("{% load require_media_tags %}{% require jquery-ui.js jquery.js jquery-ui.css %}{% require jquery-ui.css %}{% require jquery.js %}{% render_requirements css %}{% render_requirements js %}")
-        rendered = t.render(template.Context({"request": request}))
+        rendered = t.render(template.RequestContext(request))
         self.assertEquals(u'<link rel="stylesheet" type="text/css" href="/media/css/jquery-ui.css"><script src="/media/js/jquery.js"></script><script src="/media/js/jquery-ui.js"></script>', rendered)
     
     def test_render_no_request(self):
@@ -313,26 +313,26 @@ class RenderRequirementsTagTestCase(RequestMiddlewareTestCase):
     def test_render_no_group(self):
         request = self.get_request()
         t = template.Template("{% load require_media_tags %}{% require jquery-ui.js jquery.js jquery-ui.css %}{% require jquery-ui.css %}{% require jquery.js %}{% render_requirements %}")
-        rendered = t.render(template.Context({"request": request}))
+        rendered = t.render(template.RequestContext(request))
         expected = u'<link rel="stylesheet" type="text/css" href="/media/css/jquery-ui.css"><script src="/media/js/jquery.js"></script><script src="/media/js/jquery-ui.js"></script>'
         self.assertEquals(expected, rendered)
         
     def test_render_before_require(self):
         request = self.get_request()
         t = template.Template("{% load require_media_tags %}{% render_requirements css %}{% render_requirements js %}{% require jquery-ui.js jquery.js jquery-ui.css %}{% require jquery-ui.css %}{% require jquery.js %}")
-        rendered = t.render(template.Context({"request": request}))
+        rendered = t.render(template.RequestContext(request))
         self.assertEquals(u'<link rel="stylesheet" type="text/css" href="/media/css/jquery-ui.css"><script src="/media/js/jquery.js"></script><script src="/media/js/jquery-ui.js"></script>', rendered)
 
     def test_render_unknown_group(self):
         request = self.get_request()
         t = template.Template("{% load require_media_tags %}{% require jquery-ui.js jquery.js jquery-ui.css %}{% require jquery-ui.css %}{% require jquery.js %}{% render_requirements js_head %}")
-        rendered = t.render(template.Context({"request": request}))
+        rendered = t.render(template.RequestContext(request))
         self.assertEquals(u"", rendered)
 
     def test_render_inline_simple(self):
         request = self.get_request()
         t = template.Template(u'{% load require_media_tags %}{% require_inline sidebar js %}$("#sidebar").hide();{% end_require_inline %}{% render_requirements js %}')
-        rendered = t.render(template.Context({"request": request}))
+        rendered = t.render(template.RequestContext(request))
         self.assertEquals(u'<script>$("#sidebar").hide();</script>', rendered)
 
     def test_render_inline_no_request(self):
@@ -344,17 +344,17 @@ class RenderRequirementsTagTestCase(RequestMiddlewareTestCase):
     def test_render_inline_before_require(self):
         request = self.get_request()
         t = template.Template(u'{% load require_media_tags %}{% render_requirements js %}{% require_inline sidebar js %}$("#sidebar").hide();{% end_require_inline %}')
-        rendered = t.render(template.Context({"request": request}))
+        rendered = t.render(template.RequestContext(request))
         self.assertEquals(u'<script>$("#sidebar").hide();</script>', rendered)
         
     def test_render_qualified_url(self):
         request = self.get_request()
         t = template.Template(u'{% load require_media_tags %}{% require http://openlayers.org/api/OpenLayers.js %}{% render_requirements js %}')
-        rendered = t.render(template.Context({"request": request}))
+        rendered = t.render(template.RequestContext(request))
         self.assertEquals(u'<script src="http://openlayers.org/api/OpenLayers.js"></script>', rendered)
 
     def test_render_multiple_groups(self):
         request = self.get_request()
         t = template.Template(u'{% load require_media_tags %}{% require http://openlayers.org/api/OpenLayers.js %}{% require css layout.css %}{% render_requirements js css %}')
-        rendered = t.render(template.Context({"request": request}))
+        rendered = t.render(template.RequestContext(request))
         self.assertEquals(u'<script src="http://openlayers.org/api/OpenLayers.js"></script><link rel="stylesheet" type="text/css" href="/media/css/layout.css">', rendered)
