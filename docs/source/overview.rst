@@ -13,7 +13,7 @@ Using Require Media in a Project
 
 Once the Require Media package is installed you can enable its use in your
 Django project by  adding ``require_media`` to your ``INSTALLED_APPS`` and
-adding ``'django.core.context_processors.request'`` to your
+adding ``'require_media.context_processors.require_media'`` to your
 ``TEMPLATE_CONTEXT_PROCESSORS`` setting. Doing so allows you to use the
 template tags provided by Require Media by loading the ``require_media_tags``
 library in your templates.
