@@ -15,9 +15,9 @@ class RequirementRenderer(object):
         Build the URL for a given requirement.
         """
         if requirement.is_qualified_url():
-            return requirement.requirement
+            return requirement.name
         path = urljoin(MEDIA_URL, self.directory)
-        return urljoin(path, requirement.requirement)
+        return urljoin(path, requirement.name)
 
     def render(self, requirement, context):
         """

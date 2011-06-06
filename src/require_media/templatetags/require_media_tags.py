@@ -2,7 +2,7 @@ from django import template
 
 from require_media.conf import settings
 from require_media.renderers import get_renderer
-from require_media.manager import determine_requirement_group
+from require_media.utils import determine_requirement_group
 
 register = template.Library()
 
@@ -52,16 +52,16 @@ def compile_require_inline_node(parser, token):
     """
     parts = token.split_contents()
     nodelist = parser.parse(('end_require_inline',))
+    parser.delete_first_token()
     if not len(parts) >= 3:
         raise template.TemplateSyntaxError("%s tag requires two arguments: name and group" % parts[0])
-    tag_name, requirement, group, depends = parts[0], parts[1], parts[2], parts[3:]
-    parser.delete_first_token()
+    tag_name, requirement, group, depends_on = parts[0], parts[1], parts[2], parts[3:]
     requirement_aliases = settings.REQUIREMENT_ALIASES or {}
     group_aliases = settings.REQUIREMENT_GROUP_ALIASES or {}
     requirement = requirement_aliases.get(requirement) or requirement
     group = group_aliases.get(group) or group
-    depends = [requirement_aliases.get(dependency, dependency) for dependency in depends]
-    return RequireInlineNode(requirement, nodelist, group, depends)
+    depends_on = [requirement_aliases.get(dependency, dependency) for dependency in depends_on]
+    return RequireInlineNode(requirement, nodelist, group, depends_on)
 
 register.tag("require_inline", compile_require_inline_node)
 
@@ -73,16 +73,15 @@ class RequireNode(template.Node):
     """
     Registers an external media requirement with the requirement manager.
     """
-    def __init__(self, requirement, group=None, depends=None):
+    def __init__(self, requirement, group=None, depends_on=None):
         self.requirement = requirement
         self.group = group
-        self.depends = depends or []
-        self.request_var = template.Variable("request")
+        self.depends_on = depends_on or []
 
     def render(self, context):
         manager = get_manager(context)
         if manager is not None:
-            manager.add_external(self.requirement, self.group, self.depends)
+            manager.add_external(self.requirement, self.group, self.depends_on)
         return u""
 
 def compile_require_node(parser, token):
@@ -125,11 +124,11 @@ def compile_require_node(parser, token):
     else:
         group = None
     requirement = requirement_aliases.get(args[0]) or args[0]
-    depends = args[1:]
-    depends = [requirement_aliases.get(dependency, dependency) for dependency in depends]
+    depends_on = args[1:]
+    depends_on = [requirement_aliases.get(dependency, dependency) for dependency in depends_on]
     if group is None:
         group = determine_requirement_group(requirement, settings.GROUPS)
-    return RequireNode(requirement, group, depends)
+    return RequireNode(requirement, group, depends_on)
 
 register.tag("require", compile_require_node)
 
@@ -155,17 +154,11 @@ class DelayedRequirementsRenderer(object):
     def __init__(self, manager, groups, context):
         self.manager = manager
         self.groups = groups
-        self.groups_set = set(groups)
         self.context = context
 
     def __unicode__(self):
         parts = []
-        ordered = self.manager.sort_requirements()
-        ordered = filter(lambda requirement: requirement.group in self.groups_set, ordered)
-        requirements = ordered
-        requirements = []
-        for group in self.groups:
-            requirements.extend(filter(lambda requirement: requirement.group == group, ordered))
+        requirements = self.manager.get_sorted_requirements_for_groups(self.groups)
         for requirement in requirements:
             renderer = get_renderer(requirement.group)
             if renderer:

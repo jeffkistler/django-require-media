@@ -1,15 +1,18 @@
-from os.path import splitext
+"""
+Classes for managing requirements.
+"""
 from urlparse import urlparse
 
+from require_media.utils import update_graph, topological_sort
 
 class Requirement(object):
     """
-    Represents a required external static resource.
+    Represents a required static resource.
     """
-    def __init__(self, requirement, group=None, depends=None):
-        self.requirement = requirement
+    def __init__(self, name, group=None, depends_on=None):
+        self.name = name
         self.group = group
-        self.depends = depends or []
+        self.depends_on = depends_on or []
 
     def is_inline(self):
         """
@@ -23,17 +26,27 @@ class Requirement(object):
         """
         if self.is_inline():
             return False
-        result = urlparse(self.requirement)
+        result = urlparse(self.name)
         return bool(result.netloc)
+
+    def __str__(self):
+        return self.name
+
+
+class ExternalRequirement(Requirement):
+    """
+    A static resource linked to from a document.
+    """
+    pass
 
 
 class InlineRequirement(Requirement):
     """
     A static resource defined within a document.
     """
-    def __init__(self, requirement, content, group=None, depends=None):
+    def __init__(self, name, content, group=None, depends_on=None):
         self.content = content
-        super(InlineRequirement, self).__init__(requirement, group, depends)
+        super(InlineRequirement, self).__init__(name, group, depends_on)
 
     def is_inline(self):
         return True
@@ -45,99 +58,56 @@ class RequirementManager(object):
     """
     def __init__(self):
         self.requirements = []
-        self.requirement_map = {}
+        self.requirements_map = {}
+        self.graph = {}
+        self.sorted = None
 
-    def add_external(self, requirement, group=None, depends=[]):
+    def add_external(self, name, group=None, depends_on=None):
         """
-        Register an external dependency with the manager.
+        Register an external (linked) requirement with the manager.
         """
-        node = Requirement(requirement, group, depends)
-        self.requirements.append(node)
-        self.requirement_map[requirement] = node
-
-    def add_inline(self, requirement, content, group=None, depends=[]):
+        node = ExternalRequirement(name, group, depends_on)
+        self.add_node(node)
+        
+    def add_inline(self, name, content, group=None, depends_on=None):
         """
         Register an inline dependency with the manager.
         """
-        node = InlineRequirement(requirement, content, group, depends)
+        node = InlineRequirement(name, content, group, depends_on)
+        self.add_node(node)
+
+    def add_node(self, node):
+        """
+        Update the registry.
+        """
+        # Clear the cache
+        self.sorted = None
         self.requirements.append(node)
-        self.requirement_map[requirement] = node
+        self.requirements_map[node.name] = node
+        # Update graph
+        update_graph(self.graph, node.name, node.depends_on)
 
-    def make_pairs(self, requirements):
-        return make_pairs(requirements, self.requirement_map)
-
-    def sort_requirements(self, groups=None):
+    def get_sorted_requirements(self):
         """
-        Order the requirements in a given group in topological order.
-
-        If no group given, return all requirements sorted in topological order.
-        Items are returned in order their dependents require.
+        Return the requirements in topological order.
         """
-        requirements = self.requirements
-        pairs = self.make_pairs(requirements)
-        ordered = sort_requirements(pairs)
-        unique_originals = set(requirements)
-        unique_ordered = set(ordered)
-        non_requirements = list(unique_originals.difference(unique_ordered))
-        result = ordered
-        result.extend(non_requirements)
-        if groups:
-            # group_names = groups
-            # if self.group_aliases:
-            #     group_names.extend([to_name for from_name, to_name in filter(lambda from_name, to_name: to_name in group_names, result)])
-            group_names = [self.group_aliases.get(name, name) for name in groups]
-            result = filter(lambda requirement: requirement.group in group_names, result)
-        return result
+        if self.sorted is None:
+            ordered = topological_sort(self.graph)
+            if ordered:
+                ordered = [self.requirements_map[name] for name in reversed(ordered)]
+                self.sorted = ordered
+            else:
+                return self.requirements
+        return self.sorted
 
-#
-# Utilities
-#
-
-def determine_requirement_group(requirement, groups):
-    """
-    Determine a group (type) for a requirement if possible.
-    """
-    result = urlparse(requirement)
-    base, extension = splitext(result.path)
-    extension = extension.replace(".", "")
-    if extension in set(groups):
-        return extension
-    return None
-
-def make_pairs(requirements, requirement_map):
-    """
-    Make a list of parent, child requirement pairs.
-    """
-    pairs = []
-    for requirement in requirements:
-        depends = requirement.depends or []
-        for parent in depends:
-            pairs.append((requirement, requirement_map[parent]))
-    return pairs
-
-def sort_requirements(pairs):
-    """
-    Sort the requirements in topological order.
-    """
-    num_parents = {}
-    children ={}
-    for child, parent in pairs:
-        if not parent in num_parents:
-            num_parents[parent] = 0
-        if not child in num_parents:
-            num_parents[child] = 0
-        num_parents[child] += 1
-        children.setdefault(parent, []).append(child)
-
-    result = [requirement for requirement in num_parents.keys() if num_parents[requirement] == 0]
-
-    for parent in result:
-        del num_parents[parent]
-        if parent in children:
-            for child in children[parent]:
-                num_parents[child] -= 1
-                if num_parents[child] == 0:
-                    result.append(child)
-
-    return result
-
+    def get_sorted_requirements_for_groups(self, *groups):
+        """
+        Return the requirements for the given groups in topological order.
+        """
+        group_set = set(*groups)
+        sorted_requirements = self.get_sorted_requirements()
+        filtered = []
+        for requirement in sorted_requirements:
+            if requirement.group in group_set:
+                filtered.append(requirement)
+        return filtered
